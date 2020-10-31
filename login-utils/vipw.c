@@ -90,13 +90,16 @@ void pw_error (char *, int, int);
 
 static void copyfile(int from, int to)
 {
-	int nr, nw, off;
+	ssize_t nr, nw;
 	char buf[8 * 1024];
 
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
-		for (off = 0; nr > 0; nr -= nw, off += nw)
-			if ((nw = write(to, buf + off, nr)) < 0)
+		if ((nw = write(to, buf, nr)) != nr) {
+			if (nw < 0)
 				pw_error(tmp_file, 1, 1);
+			warnx(_("%s: write error"), tmp_file);
+			pw_error(NULL, 0, 1);
+		}
 
 	if (nr < 0)
 		pw_error(orig_file, 1, 1);
